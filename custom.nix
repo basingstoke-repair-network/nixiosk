@@ -15,6 +15,7 @@
     };
     nixiosk.program.executable = lib.mkOption {
       type = lib.types.str;
+      default = lib.getExe config.nixiosk.program.package;
     };
     nixiosk.program.args = lib.mkOption {
       type = lib.types.listOf lib.types.str;
@@ -98,7 +99,7 @@
       sshKey = "/etc/ssh/ssh_host_rsa_key";
     };
     users.users.root.openssh.authorizedKeys.keys = config.nixiosk.authorizedKeys;
-    services.cage.program = "${lib.getBin package}${config.nixiosk.program.executable} ${toString (config.nixiosk.program.args)}";
+    services.cage.program = "${config.nixiosk.program.executable} ${toString (config.nixiosk.program.args)}";
     environment.systemPackages = [ package ];
     systemd.packages = [ package ];
     services.dbus.packages = [ package ];

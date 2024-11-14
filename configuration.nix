@@ -10,14 +10,14 @@
 
   hardware.opengl.enable = true;
   hardware.bluetooth.enable = true;
-  sound.enable = true;
   hardware.pulseaudio.enable = true;
   services.dbus.enable = true;
 
   # theming
   gtk.iconCache.enable = true;
   environment.systemPackages = [
-    pkgs.gnome3.adwaita-icon-theme pkgs.hicolor-icon-theme
+    pkgs.adwaita-icon-theme
+    pkgs.hicolor-icon-theme
 
     (pkgs.git.override {
       withManual = false;
@@ -30,12 +30,16 @@
   # input
   services.udev.packages = [ pkgs.libinput.out ];
 
-  nix.binaryCachePublicKeys = ["nixiosk.cachix.org-1:A4kH9p+y9NjDWj0rhaOnv3OLIOPTbjRIsXRPEeTtiS4="];
-  nix.binaryCaches = ["https://nixiosk.cachix.org"];
+  nix = {
+    settings = {
+      substituters = ["https://nixiosk.cachix.org"];
+      trusted-public-keys = ["nixiosk.cachix.org-1:A4kH9p+y9NjDWj0rhaOnv3OLIOPTbjRIsXRPEeTtiS4="];
+    };
+  };
 
   services.openssh = {
     enable = true;
-    permitRootLogin = "without-password";
+    settings.PermitRootLogin = "without-password";
     startWhenNeeded = true;
   };
 
@@ -73,7 +77,7 @@
 
   services.avahi = {
     enable = true;
-    nssmdns = true;
+    nssmdns4 = true;
     publish = {
       enable = true;
       userServices = true;
@@ -98,6 +102,7 @@
   };
 
   nixpkgs = {
+    config.allowUnfree = true;
     overlays = [
 
     # Disable some things that don’t cross compile
@@ -107,62 +112,16 @@
         enableGeoLocation = false;
         stdenv = super.stdenv;
       };
-      gst_all_1 = super.gst_all_1 // {
-        gst-plugins-good = null;
-        gst-plugins-bad = null;
-        gst-plugins-ugly = null;
-        gst-libav = null;
-      };
-
-      # cython pulls in target-specific gdb
-      python37 = super.python37.override {
-        packageOverrides = self: super: { cython = super.cython.override { gdb = null; }; };
-      };
-
-      # doesn’t cross compile
-      libass = super.libass.override { encaSupport = false; };
-      libproxy = super.libproxy.override { networkmanager = null; };
-      enchant2 = super.enchant2.override { hspell = null; };
-      cage = super.cage.override { xwayland = null; };
-
-      alsaPlugins = super.alsaPlugins.override { libjack2 = null; };
-      fluidsynth = super.fluidsynth.override { libjack2 = null; };
-      portaudio = super.portaudio.override { libjack2 = null; };
-
-      ffmpeg_4 = super.ffmpeg_4.override ({
-        sdlSupport = false;
-        # some ffmpeg libs are compiled with neon which rpi0 doesn’t support
-      } // lib.optionalAttrs (super.stdenv.hostPlatform.parsed.cpu.name == "armv6l") {
-        libopus = null;
-        x264 = null;
-        x265 = null;
-        soxr = null;
-      });
-      ffmpeg = super.ffmpeg.override ({
-        sdlSupport = false;
-      } // lib.optionalAttrs (super.stdenv.hostPlatform.parsed.cpu.name == "armv6l") {
-        libopus = null;
-        x264 = null;
-        x265 = null;
-        soxr = null;
-      });
-
-      mesa = super.mesa.override { eglPlatforms = ["wayland"]; };
 
       kodi = super.kodi.override {
         sambaSupport = false;
         rtmpSupport = false;
         joystickSupport = false;
-        lirc = null;
       };
-
-      busybox-sandbox-shell = super.busybox-sandbox-shell.override { inherit (super) busybox; };
-
     }) (self: super: {
       grub2 = super.grub2.override { zfsSupport = false; };
 
       retroarchBare = (super.retroarchBare.override {
-        SDL2 = null;
         withVulkan = false;
         withX11 = false;
       }).overrideAttrs (o: {
@@ -193,7 +152,6 @@
 
       libinput = super.libinput.override (o: {
         documentationSupport = false;
-        python3 = null;
       });
     }) ];
 
@@ -208,7 +166,7 @@
        else (lib.mkIf (config.nixpkgs.crossSystem.system or null != null) config.nixpkgs.crossSystem);
   };
 
-  boot.plymouth.enable = true;
+  boot.plymouth.enable = false;
   boot.kernelParams = [ "rd.udev.log_priority=3" "vt.global_cursor_default=0" ];
 
   networking.dhcpcd.extraConfig = ''

@@ -26,16 +26,7 @@
 
     networking.wireless.enable = true;
 
-    systemd.services.virtualbox-vmsvga = {
-      description = "VirtualBox VMSVGA Auto-Resizer";
-      wantedBy = [ "multi-user.target" ];
-      requires = [ "dev-vboxguest.device" ];
-      after = [ "dev-vboxguest.device" ];
-      unitConfig.ConditionVirtualization = "oracle";
-      serviceConfig.ExecStart = "${config.boot.kernelPackages.virtualboxGuestAdditions}/bin/VBoxClient --vmsvga";
-    };
-
-    systemd.services.qemu-guest-agent = {
+    systemd.services.qemu-guest-agent = lib.optionalAttrs (builtins.elem config.nixiosk.hardware ["qemu" ]) {
       description = "Run the QEMU Guest Agent";
       unitConfig.ConditionVirtualization = "qemu";
       serviceConfig = {
@@ -44,9 +35,6 @@
         RestartSec = 0;
       };
     };
-
-    environment.systemPackages = [ config.boot.kernelPackages.virtualboxGuestAdditions ];
-    boot.extraModulePackages = [ config.boot.kernelPackages.virtualboxGuestAdditions ];
 
     hardware.firmware = [ pkgs.wireless-regdb ];
 
