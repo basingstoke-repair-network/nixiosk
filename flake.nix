@@ -1,13 +1,19 @@
 {
   description = "Nix-based Kiosk systems";
 
-  inputs.nixpkgs.url = "github:matthewbauer/nixpkgs?ref=kiosk-21.05";
-  inputs.nixpkgs-unstable.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-
   nixConfig = {
-    substituters = [ "https://nixiosk.cachix.org" ];
-    trusted-public-keys = [ "nixiosk.cachix.org-1:A4kH9p+y9NjDWj0rhaOnv3OLIOPTbjRIsXRPEeTtiS4=" ];
+   extra-trusted-public-keys = [
+    "nixiosk.cachix.org-1:A4kH9p+y9NjDWj0rhaOnv3OLIOPTbjRIsXRPEeTtiS4="
+    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+   ];
+   extra-trusted-substituters = [
+    "https://nixiosk.cachix.org"
+    "https://cache.nixos.org/"
+   ];
   };
+
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-24.05";
+  inputs.nixpkgs-unstable.url = "github:NixOS/nixpkgs?ref=nixos-unstable";
 
   outputs = { self, nixpkgs, nixpkgs-unstable }: let
     systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" "aarch64-linux" ];
@@ -86,7 +92,7 @@
   in {
 
     packages = forAllSystems (system: let
-      nixpkgsFor = forAllSystems (system: import nixpkgs-unstable { inherit system; } );
+      nixpkgsFor = forAllSystems (system: import nixpkgs-unstable { inherit system; config.allowUnfree = true; } );
 
     in {
       nixiosk = with nixpkgsFor.${system}; runCommand "nixiosk" {} (''
@@ -120,7 +126,7 @@
 
     nixosConfigurations = let
       system = "x86_64-linux";
-      nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; } );
+      nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; config.allowUnfree = true; } );
 
       boot = { hardware ? null, program, name, locale ? {}, ... } @ args: makeBootableSystem {
         pkgs = nixpkgsFor.${system};
@@ -157,7 +163,7 @@
       // builtins.mapAttrs (_: system: system.config.system.build.toplevel) self.nixosConfigurations;
 
     devShell = forAllSystems (system: let
-      nixpkgsFor = forAllSystems (system: import nixpkgs-unstable { inherit system; } );
+      nixpkgsFor = forAllSystems (system: import nixpkgs-unstable { inherit system; config.allowUnfree = true; } );
     in with nixpkgsFor.${system}; stdenv.mkDerivation {
       name = "nixiosk";
 

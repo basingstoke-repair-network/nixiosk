@@ -2,6 +2,7 @@
 #!nix-shell -i bash -p coreutils nix jq
 
 set -eu -o pipefail
+set -x
 
 NIXIOSK="$PWD"
 
@@ -49,7 +50,7 @@ case "$hardware" in
 esac
 
 if [ -n "$flake" ]; then
-    nix --experimental-features 'nix-command flakes' build "$flake.$target" "$@" ${NIX_OPTIONS:-}
+    nix --refresh --experimental-features 'nix-command flakes' build "$flake.$target" "$@" ${NIX_OPTIONS:-}
 else
     nix-build "$NIXIOSK/boot" \
               --arg custom "builtins.fromJSON (builtins.readFile $(realpath $custom))" \

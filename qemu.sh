@@ -148,7 +148,6 @@ fi
   -device virtio-tablet-pci \
   -device virtio-keyboard-pci \
   -device virtio-balloon \
-  -soundhw all \
   -display default,show-cursor=on \
   -kernel $system/kernel -initrd $system/initrd \
   -append "$(cat $system/kernel-params) init=$system/init" \
